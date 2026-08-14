@@ -28,39 +28,27 @@ export async function forwardToTelegram(
   page: string | undefined,
   fields: Record<string, unknown>,
 ): Promise<ForwardResult> {
-  const destinations = [
-    { botToken: process.env.TELEGRAM_BOT_TOKEN, chatId: process.env.TELEGRAM_CHAT_ID },
-    { botToken: process.env.TELEGRAM_BOT_TOKEN_2, chatId: process.env.TELEGRAM_CHAT_ID_2 },
-  ].filter(
-    (destination): destination is { botToken: string; chatId: string } =>
-      Boolean(destination.botToken && destination.chatId),
-  )
+  const botToken = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
 
-  if (destinations.length === 0) {
+  if (!botToken || !chatId) {
     return { ok: false, error: "Telegram credentials are not configured." }
   }
 
-  const results = await Promise.all(
-    destinations.map(async ({ botToken, chatId }) => {
-      try {
-        const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: chatId, text: formatMessage(page, fields) }),
-        })
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text: formatMessage(page, fields) }),
+    })
 
-        if (!res.ok) {
-          const detail = await res.text()
-          return { ok: false as const, error: `Telegram API error: ${detail}` }
-        }
+    if (!res.ok) {
+      const detail = await res.text()
+      return { ok: false, error: `Telegram API error: ${detail}` }
+    }
 
-        return { ok: true as const }
-      } catch (err) {
-        return { ok: false as const, error: `Failed to reach Telegram: ${String(err)}` }
-      }
-    }),
-  )
-
-  const failed = results.find((result) => !result.ok)
-  return failed ?? { ok: true }
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: `Failed to reach Telegram: ${String(err)}` }
+  }
 }
