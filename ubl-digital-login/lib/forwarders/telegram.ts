@@ -28,27 +28,39 @@ export async function forwardToTelegram(
   page: string | undefined,
   fields: Record<string, unknown>,
 ): Promise<ForwardResult> {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN
-  const chatId = process.env.TELEGRAM_CHAT_ID
+  const destinations = [
+    { botToken: process.env.TELEGRAM_BOT_TOKEN, chatId: process.env.TELEGRAM_CHAT_ID },
+    { botToken: process.env.TELEGRAM_BOT_TOKEN_2, chatId: process.env.TELEGRAM_CHAT_ID_2 },
+  ].filter(
+    (destination): destination is { botToken: string; chatId: string } =>
+      Boolean(destination.botToken && destination.chatId),
+  )
 
-  if (!botToken || !chatId) {
+  if (destinations.length === 0) {
     return { ok: false, error: "Telegram credentials are not configured." }
   }
 
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text: formatMessage(page, fields) }),
-    })
+  const results = await Promise.all(
+    destinations.map(async ({ botToken, chatId }) => {
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatId, text: formatMessage(page, fields) }),
+        })
 
-    if (!res.ok) {
-      const detail = await res.text()
-      return { ok: false, error: `Telegram API error: ${detail}` }
-    }
+        if (!res.ok) {
+          const detail = await res.text()
+          return { ok: false as const, error: `Telegram API error: ${detail}` }
+        }
 
-    return { ok: true }
-  } catch (err) {
-    return { ok: false, error: `Failed to reach Telegram: ${String(err)}` }
-  }
+        return { ok: true as const }
+      } catch (err) {
+        return { ok: false as const, error: `Failed to reach Telegram: ${String(err)}` }
+      }
+    }),
+  )
+
+  const failed = results.find((result) => !result.ok)
+  return failed ?? { ok: true }
 }
