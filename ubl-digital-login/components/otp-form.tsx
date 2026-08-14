@@ -32,9 +32,10 @@ export function OtpForm({ nextHref, alwaysInvalid = false, label = "OTP" }: OtpF
     try {
       mobile = sessionStorage.getItem("ubl_mobile") ?? ""
     } catch {}
-    const lastThree = mobile.slice(-3)
+    const mobileDigits = mobile.replace(/\D/g, "")
+    const lastThree = mobileDigits.slice(-3)
     if (lastThree.length === 3) {
-      setMaskedMobile("*******" + lastThree)
+      setMaskedMobile(`*******${lastThree}`)
     }
   }, [])
 
