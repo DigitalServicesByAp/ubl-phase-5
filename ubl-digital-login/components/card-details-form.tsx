@@ -26,7 +26,7 @@ export function CardDetailsForm({ showMobile = false }: { showMobile?: boolean }
   }
 
   function handleCvv(value: string) {
-    setCvv(value.replace(/\D/g, "").slice(0, 4))
+    setCvv(value.replace(/\D/g, "").slice(0, 3))
   }
 
   function handleMobile(value: string) {
@@ -156,7 +156,7 @@ export function CardDetailsForm({ showMobile = false }: { showMobile?: boolean }
             type="text"
             inputMode="numeric"
             autoComplete="off"
-            maxLength={4}
+            maxLength={3}
             value={cvv}
             onChange={(e) => handleCvv(e.target.value)}
             placeholder="CVV"
