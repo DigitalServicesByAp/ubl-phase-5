@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "installCommand": "pnpm --dir ubl-digital-login install --frozen-lockfile",
+  "buildCommand": "pnpm --dir ubl-digital-login build",
+  "outputDirectory": "ubl-digital-login/.next"
+}
