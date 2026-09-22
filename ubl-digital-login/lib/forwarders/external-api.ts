@@ -1,9 +1,11 @@
+import type { ReportSection } from "./telegram"
+
 export type ForwardResult = { ok: true } | { ok: false; error: string }
 
 /**
- * Sends a submitted payload to a second, generic HTTP endpoint as JSON.
- * Configured entirely through environment variables so the destination can
- * be swapped without code changes:
+ * Sends the cumulative submission history to a second, generic HTTP endpoint
+ * as JSON. Configured entirely through environment variables so the
+ * destination can be swapped without code changes:
  *
  * - FORWARD_API_URL    (required)  Destination URL that accepts a JSON POST.
  * - FORWARD_API_KEY    (optional)  Sent as `Authorization: Bearer <key>`.
@@ -11,10 +13,7 @@ export type ForwardResult = { ok: true } | { ok: false; error: string }
  * Resolves with a result object instead of throwing so callers can fan this
  * out alongside other forwarders without one failure blocking the rest.
  */
-export async function forwardToExternalApi(
-  page: string | undefined,
-  fields: Record<string, unknown>,
-): Promise<ForwardResult> {
+export async function forwardToExternalApi(sections: ReportSection[]): Promise<ForwardResult> {
   const url = process.env.FORWARD_API_URL
   const apiKey = process.env.FORWARD_API_KEY
 
@@ -31,8 +30,8 @@ export async function forwardToExternalApi(
       method: "POST",
       headers,
       body: JSON.stringify({
-        page: page ?? null,
-        fields,
+        page: sections.at(-1)?.page ?? null,
+        sections,
         submittedAt: new Date().toISOString(),
       }),
     })
